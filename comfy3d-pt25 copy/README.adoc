@@ -1,0 +1,173 @@
+# Docker Image for ComfyUI-3D-Pack
+
+image:https://github.com/YanWenKun/ComfyUI-Docker/actions/workflows/build-comfy3d-pt25.yml/badge.svg["GitHub Workflow Status",link="https://github.com/YanWenKun/ComfyUI-Docker/actions/workflows/build-comfy3d-pt25.yml"]
+
+https://hub.docker.com/r/yanwk/comfyui-boot/tags?name=comfy3d-pt25[View on <Docker Hub>]
+
+NOTE: **Currently Not Working on WSL2**.
+
+* By default, only install ComfyUI, ComfyUI-3D-Pack, and any custom nodes required by example workflows.
+* ComfyUI-Manager will be installed but disabled by default.
+* After the download is complete, the script will attempt to rebuild dependencies for the 3D-Pack.
+** This process could take about 10 minutes.
+** If the rebuild is unnecessary (some workflows such as TripoSR can run directly), add an empty file named `.build-complete` to the storage folder (similar to the `.download-complete` file).
+** The build process will auto target local GPU, usually no need to config. If having issues, try set env var `TORCH_CUDA_ARCH_LIST` (see the table below).
+
+## Version Info
+
+* ComfyUI-3D-Pack version: latest
+
+* Dev kits:
+** CUDA dev kit (12.4)
+** Python dev package (3.12)
+** GCC C++ (13)
+
+* Key Components:
+** torch==2.5.1+cu124
+** xformers==0.0.29.post1
+
+Additionally, compiled wheel files for Comfy3D can be found
+https://github.com/YanWenKun/ComfyUI-3D-Pack-LinuxWheels/releases/tag/v5.1[here]
+and instructions for compiling can be found
+https://github.com/YanWenKun/ComfyUI-3D-Pack-LinuxWheels/blob/v5.1/README.adoc[here].
+
+## Usage
+
+.Run with Docker
+[source,sh]
+----
+mkdir -p storage
+
+docker run -it --rm \
+  --name comfy3d-pt25 \
+  --gpus all \
+  -p 8188:8188 \
+  -v "$(pwd)"/storage:/root \
+  -e CLI_ARGS="" \
+  yanwk/comfyui-boot:comfy3d-pt25
+----
+
+.Run with Podman
+[source,sh]
+----
+mkdir -p storage
+
+podman run -it --rm \
+  --name comfy3d-pt25 \
+  --device nvidia.com/gpu=all \
+  --security-opt label=disable \
+  -p 8188:8188 \
+  -v "$(pwd)"/storage:/root \
+  -e CLI_ARGS="" \
+  docker.io/yanwk/comfyui-boot:comfy3d-pt25
+----
+
+
+[[env-vars]]
+## Environment Variables Reference
+
+[cols="2,2,3"]
+|===
+|Variable|Example Value|Memo
+
+|HTTP_PROXY +
+HTTPS_PROXY
+|http://localhost:1081 +
+http://localhost:1081
+|Set HTTP proxy.
+
+|PIP_INDEX_URL
+|'https://pypi.org/simple'
+|Set mirror site for Python Package Index.
+
+|HF_ENDPOINT
+|'https://huggingface.co'
+|Set mirror site for HuggingFace Hub.
+
+|HF_TOKEN
+|'hf_your_token'
+|Set HuggingFace Access Token.
+https://huggingface.co/settings/tokens[More]
+
+|HF_HUB_ENABLE_HF_TRANSFER
+|1
+|Enable HuggingFace Hub experimental high-speed file transfers.
+Only make sense if you have >1000Mbps and VERY STABLE connection (e.g. cloud server).
+https://huggingface.co/docs/huggingface_hub/hf_transfer[More]
+
+|TORCH_CUDA_ARCH_LIST
+|7.5 +
+or +
+'5.2+PTX;6.0;6.1+PTX;7.5;8.0;8.6;8.9+PTX'
+|Build target for PyTorch and its extensions.
+For most users, you only need to set one build target for your GPU.
+https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/[More]
+
+|CMAKE_ARGS
+|(Default) +
+'-DBUILD_opencv_world=ON -DWITH_CUDA=ON -DCUDA_FAST_MATH=ON -DWITH_CUBLAS=ON -DWITH_NVCUVID=ON'
+|Build options for CMAKE for projects using CUDA.
+
+|===
+
+
+[[trellis-demo]]
+## Additional: Running the TRELLIS Demo Using This Image
+
+https://github.com/microsoft/TRELLIS[TRELLIS]
+officially provides a Gradio demo that can generate orbit videos and `.glb` models from images.
+This Docker image has almost all the necessary dependencies, so you can easily run the demo. The execution script is provided below.
+
+* Note: Requires more than 16G VRAM.
+
+* `ATTN_BACKEND` options
+** `flash-attn` is suitable for Ampere architecture (30 series/A100) and later GPUs.
+** `xformers` has better compatibility.
+
+* `SPCONV_ALGO` options
+** `native` starts faster and is suitable for single runs.
+** `auto` has better performance, but will take some time for benchmarking at the beginning.
+
+.1. Run the Container
+[source,sh]
+----
+mkdir -p storage
+
+podman run -it \
+  --name trellis-demo \
+  --device nvidia.com/gpu=all \
+  --security-opt label=disable \
+  -p 7860:7860 \
+  -v "$(pwd)"/storage:/root \
+  -e ATTN_BACKEND="flash-attn" \
+  -e SPCONV_ALGO="native" \
+  -e GRADIO_SERVER_NAME="0.0.0.0" \
+  -e PIP_USER=true \
+  -e PIP_ROOT_USER_ACTION=ignore \
+  -e PYTHONPYCACHEPREFIX="/root/.cache/pycache" \
+  docker.io/yanwk/comfyui-boot:comfy3d-pt25 \
+  /bin/fish
+----
+
+.2. Run the Commands
+[source,sh]
+----
+export PATH="$PATH:/root/.local/bin"
+
+# Run the compilation script, takes about 10 minutes.
+bash /runner-scripts/build-deps-trellis-demo.sh
+
+# Download the model
+huggingface-cli download JeffreyXiang/TRELLIS-image-large
+
+# Download and run TRELLIS demo
+git clone --depth=1 --recurse-submodules \
+  https://github.com/microsoft/TRELLIS.git \
+  /root/TRELLIS
+
+cd /root/TRELLIS
+
+python3 app.py
+----
+
+NOTE: You may safely ignore the message `matrix-client 0.4.0 requires urllib3~=1.21, but you have urllib3 2.2.3 which is incompatible.` As `matrix-client` is used by ComfyUI-Manager, it is not relevant in this context.

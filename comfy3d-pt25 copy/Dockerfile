@@ -1,10 +1,10 @@
 ################################################################################
 # Dockerfile that builds 'yanwk/comfyui-boot:comfy3d-pt25'
 # An environment for running ComfyUI with ComfyUI-3D-Pack.
-# Using PyTorch 2.5, CUDA 12.1, Python 3.12
+# Using PyTorch 2.5, CUDA 12.4, Python 3.12
 ################################################################################
 
-FROM yanwk/comfyui-boot:base-cu121-pt25
+FROM yanwk/comfyui-boot:base-cu124-pt25
 
 LABEL maintainer="YAN Wenkun <code@yanwk.fun>"
 
@@ -57,13 +57,9 @@ RUN du -ah /root \
     && find /root/ -mindepth 1 -delete
 
 COPY runner-scripts/.  /runner-scripts/
-RUN chmod +x /runner-scripts/install-wheels.sh
-
-# Create wheels directory
-RUN mkdir -p /wheels
 
 USER root
-VOLUME ["/root", "/wheels"]
+VOLUME /root
 WORKDIR /root
 EXPOSE 8188
 ENV CLI_ARGS=""
