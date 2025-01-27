@@ -8,6 +8,23 @@ that runs
 https://github.com/comfyanonymous/ComfyUI[ComfyUI] - 
 a Stable Diffusion GUI powering node-based workflow.
 
+## Quick Start 3D - Pre-built Image with ComfyUI-3D-Pack
+
+The fastest way to get started with ComfyUI and ComfyUI-3D-Pack:
+
+```sh
+# Download the pre-built image
+./setup.sh --download-image
+
+# Load and start the container
+./setup.sh --load-image
+
+# Install additional dependencies (takes about 10 minutes)
+./setup.sh --install-wheels
+```
+
+After installation, ComfyUI will be available at http://localhost:8188
+
 ## Quick Start - NVIDIA GPU
 
 ```sh

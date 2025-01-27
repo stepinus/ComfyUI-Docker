@@ -11,20 +11,19 @@ NC='\033[0m'
 show_help() {
     echo "ComfyUI Docker Setup Script"
     echo ""
-    echo "Usage: $0"
-    echo "This script will help you select and run a ComfyUI configuration"
+    echo "Usage: $0 [OPTIONS]"
+    echo "Options:"
+    echo "  --download-image Download pre-built image from S3"
+    echo "  --load-image    Load Docker image and run"
+    echo "  --install-wheels Install pre-compiled wheels in running container"
+    echo "  --help          Show this help message"
 }
 
-# Function to list available configurations
-list_configs() {
-    echo "Available configurations:"
-    echo ""
-    for d in */ ; do
-        if [ -f "${d}Dockerfile" ]; then
-            echo "  ${d%/}"
-        fi
-    done
-}
+# Show help if no arguments
+if [ $# -eq 0 ]; then
+    show_help
+    exit 1
+fi
 
 # Show help if requested
 if [ "$1" == "--help" ]; then
@@ -32,52 +31,6 @@ if [ "$1" == "--help" ]; then
     exit 0
 fi
 
-# List available configurations
-echo -e "${BLUE}Welcome to ComfyUI Docker Setup${NC}"
-echo ""
-list_configs
-echo ""
-
-# Ask user to select configuration
-echo -e "${YELLOW}Please enter the name of the configuration you want to use:${NC}"
-read -r CONFIG
-
-# Validate configuration
-if [ ! -d "$CONFIG" ] || [ ! -f "${CONFIG}/Dockerfile" ]; then
-    echo -e "${YELLOW}Error: Invalid configuration '${CONFIG}'${NC}"
-    exit 1
-fi
-
-# Show available actions
-echo ""
-echo -e "${BLUE}Available actions:${NC}"
-echo "1. Build and run"
-echo "2. Build image only"
-echo "3. Save image for distribution"
-echo "4. Load saved image and run"
-echo "5. Install wheels in running container"
-echo ""
-echo -e "${YELLOW}Please select an action (1-5):${NC}"
-read -r ACTION
-
-case $ACTION in
-    1)
-        ./setup-comfy.sh "$CONFIG"
-        ;;
-    2)
-        ./setup-comfy.sh "$CONFIG" --build-only
-        ;;
-    3)
-        ./setup-comfy.sh "$CONFIG" --save-image
-        ;;
-    4)
-        ./setup-comfy.sh "$CONFIG" --load-image
-        ;;
-    5)
-        ./setup-comfy.sh "$CONFIG" --install-wheels
-        ;;
-    *)
-        echo -e "${YELLOW}Error: Invalid action${NC}"
-        exit 1
-        ;;
-esac 
+# Forward all arguments to the setup-comfy3d.sh script
+cd comfy3d-pt25
+./setup-comfy3d.sh "$@" 

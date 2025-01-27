@@ -15,7 +15,7 @@ fi ;
 
 # Compile PyTorch3D
 # Put it first because it takes longest time.
-pip install --force-reinstall \
+pip install --break-system-packages --force-reinstall \
     "git+https://github.com/facebookresearch/pytorch3d.git"
 
 # Compile libs in Comfy3D_Pre_Builds
@@ -28,29 +28,29 @@ rm /tmp/Comfy3D_Pre_Builds-main.zip ;
 
 for D in /tmp/Comfy3D_Pre_Builds-main/_Libs/*; do
     if [ -d "${D}" ] ; then
-        pip install --force-reinstall "${D}"
+        pip install --break-system-packages --force-reinstall "${D}"
     fi
 done
 
 # Compile other deps, using latest
 cd /root
 
-pip install --force-reinstall \
+pip install --break-system-packages --force-reinstall \
     "git+https://github.com/ashawkey/diff-gaussian-rasterization.git"
 
-pip install --force-reinstall \
+pip install --break-system-packages --force-reinstall \
     "git+https://github.com/ashawkey/kiuikit.git"
 
-pip install --force-reinstall \
+pip install --break-system-packages --force-reinstall \
     "git+https://github.com/NVlabs/nvdiffrast.git"
 
 # For TRELLIS
 # Note: vox2seq is already included in Comfy3D_Pre_Builds.
 
-pip install git+https://github.com/JeffreyXiang/diffoctreerast.git
+pip install --break-system-packages git+https://github.com/JeffreyXiang/diffoctreerast.git
 
 # Ensure Numpy1
-pip install numpy==1.26.4
+pip install --break-system-packages numpy==1.26.4
 
 # Finish
 touch /root/.build-complete

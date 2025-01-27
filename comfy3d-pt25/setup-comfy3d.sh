@@ -11,6 +11,7 @@ NC='\033[0m'
 IMAGE_NAME="yanwk/comfyui-boot:comfy3d-pt25"
 SAVE_FILE="comfy3d-image.tar"
 CONTAINER_NAME="comfy3d-pt25"
+IMAGE_URL="https://s3.ru1.storage.beget.cloud/88095fdffa8e-tidy-trish/comfy3d-image.tar"
 
 # Function to show help
 show_help() {
@@ -18,6 +19,7 @@ show_help() {
     echo "Options:"
     echo "  --build-only    Build Docker image without running container"
     echo "  --save-image    Build and save Docker image to ${SAVE_FILE}"
+    echo "  --download-image Download pre-built image from S3"
     echo "  --load-image    Load Docker image from ${SAVE_FILE} and run"
     echo "  --install-wheels Install pre-compiled wheels in running container"
     echo "  --help          Show this help message"
@@ -38,6 +40,20 @@ case "$1" in
         echo -e "${YELLOW}To save the image, run: $0 --save-image${NC}"
         exit 0
         ;;
+    --download-image)
+        echo -e "${BLUE}Downloading pre-built Docker image from S3...${NC}"
+        if command -v curl &> /dev/null; then
+            curl -L -o ${SAVE_FILE} "${IMAGE_URL}"
+        elif command -v wget &> /dev/null; then
+            wget -O ${SAVE_FILE} "${IMAGE_URL}"
+        else
+            echo -e "${YELLOW}Error: Neither curl nor wget is installed!${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}Download completed!${NC}"
+        echo -e "${YELLOW}To load and run the image, use: $0 --load-image${NC}"
+        exit 0
+        ;;
     --save-image)
         echo -e "${BLUE}Building Docker image for distribution...${NC}"
         docker build -t ${IMAGE_NAME} .
@@ -51,10 +67,30 @@ case "$1" in
     --load-image)
         if [ ! -f "${SAVE_FILE}" ]; then
             echo -e "${YELLOW}Error: ${SAVE_FILE} not found!${NC}"
+            echo -e "${YELLOW}Please download it first with: $0 --download-image${NC}"
             exit 1
         fi
         echo -e "${BLUE}Loading Docker image from ${SAVE_FILE}...${NC}"
         docker load < ${SAVE_FILE}
+
+        # Create storage directory
+        echo -e "${GREEN}Creating storage directory...${NC}"
+        mkdir -p storage
+
+        # Create and start the container
+        echo -e "${GREEN}Starting the container...${NC}"
+        docker run -d --name ${CONTAINER_NAME} \
+          --gpus all \
+          -p 8188:8188 \
+          -v "$(pwd)"/storage:/root \
+          -e CLI_ARGS="" \
+          ${IMAGE_NAME}
+
+        echo -e "${GREEN}Setup completed!${NC}"
+        echo -e "${BLUE}ComfyUI will be available at: http://localhost:8188${NC}"
+        echo -e "${YELLOW}To install pre-compiled wheels, run: $0 --install-wheels${NC}"
+        echo -e "${BLUE}Note: The first start may take several minutes while dependencies are being installed.${NC}"
+        exit 0
         ;;
     --install-wheels)
         if ! is_container_running; then
@@ -88,22 +124,4 @@ case "$1" in
         show_help
         exit 1
         ;;
-esac
-
-# Create storage directory
-echo -e "${GREEN}Creating storage directory...${NC}"
-mkdir -p storage
-
-# Create and start the container
-echo -e "${GREEN}Starting the container...${NC}"
-docker run -d --name ${CONTAINER_NAME} \
-  --gpus all \
-  -p 8188:8188 \
-  -v "$(pwd)"/storage:/root \
-  -e CLI_ARGS="" \
-  ${IMAGE_NAME}
-
-echo -e "${GREEN}Setup completed!${NC}"
-echo -e "${BLUE}ComfyUI will be available at: http://localhost:8188${NC}"
-echo -e "${YELLOW}To install pre-compiled wheels, run: $0 --install-wheels${NC}"
-echo -e "${BLUE}Note: The first start may take several minutes while dependencies are being installed.${NC}" 
+esac 
