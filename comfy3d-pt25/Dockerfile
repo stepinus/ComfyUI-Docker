@@ -23,32 +23,30 @@ RUN --mount=type=cache,target=/var/cache/zypp \
     && zypper remove --no-confirm libQt5Core5 # Temp fix for PyMeshLab
 
 ################################################################################
+# Create and activate virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+################################################################################
 # More Python Packages
 
 COPY builder-scripts/.  /builder-scripts/
 
 # Deps for ComfyUI & custom nodes
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install \
-        -r /builder-scripts/pak3.txt \
-    && pip install \
-        -r /builder-scripts/pak4.txt
+    pip install -r /builder-scripts/pak3.txt \
+    && pip install -r /builder-scripts/pak4.txt
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install \
-        -r /builder-scripts/pak5.txt
+    pip install -r /builder-scripts/pak5.txt
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install \
-        -r /builder-scripts/pak6.txt \
-    && pip install \
-        -r /builder-scripts/pak7.txt \
-    && pip install \
-        -r /builder-scripts/pak8.txt \
-    && pip install \
-        -r /builder-scripts/pak9.txt \
-    && pip install \
-        -r /builder-scripts/pakA.txt \
+    pip install -r /builder-scripts/pak6.txt \
+    && pip install -r /builder-scripts/pak7.txt \
+    && pip install -r /builder-scripts/pak8.txt \
+    && pip install -r /builder-scripts/pak9.txt \
+    && pip install -r /builder-scripts/pakA.txt \
     && pip list
 
 ################################################################################
