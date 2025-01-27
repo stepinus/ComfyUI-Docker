@@ -81,6 +81,9 @@ case "$1" in
         echo -e "${GREEN}Starting the container...${NC}"
         docker run -d --name ${CONTAINER_NAME} \
           --gpus all \
+          --runtime=nvidia \
+          -e NVIDIA_DRIVER_CAPABILITIES=all \
+          -e NVIDIA_VISIBLE_DEVICES=all \
           -p 8188:8188 \
           -v "$(pwd)"/storage:/root \
           -e CLI_ARGS="" \

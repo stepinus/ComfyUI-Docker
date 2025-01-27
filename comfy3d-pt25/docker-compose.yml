@@ -13,6 +13,9 @@ services:
       - "./storage:/root"
     environment:
       - CLI_ARGS=
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_VISIBLE_DEVICES=all
+    runtime: nvidia
     security_opt:
       - "label=type:nvidia_container_t"
     deploy:
