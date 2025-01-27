@@ -20,12 +20,14 @@ RUN --mount=type=cache,target=/var/cache/zypp \
     zypper --gpg-auto-import-keys \
         install --no-confirm --auto-agree-with-licenses \
         meshlab \
+        python312-base \
+        python312-venv \
     && zypper remove --no-confirm libQt5Core5 # Temp fix for PyMeshLab
 
 ################################################################################
 # Create and activate virtual environment
 ENV VIRTUAL_ENV=/opt/venv
-RUN python -m venv $VIRTUAL_ENV
+RUN python3.12 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 ################################################################################
