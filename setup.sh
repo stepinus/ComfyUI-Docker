@@ -31,6 +31,12 @@ if [ "$1" == "--help" ]; then
     exit 0
 fi
 
+# Save current directory
+ORIGINAL_DIR=$(pwd)
+
 # Forward all arguments to the setup-comfy3d.sh script
 cd comfy3d-pt25
-./setup-comfy3d.sh "$@" 
+./setup-comfy3d.sh "$@"
+
+# Return to original directory
+cd "$ORIGINAL_DIR" 
